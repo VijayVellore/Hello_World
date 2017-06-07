@@ -1,0 +1,337 @@
+S.No,Analysis name,Analysis Objective,Observations/Findings,Business Area,Subject Area,CXA Program,Stakeholder,CXA Owner,Responsible ,Accountable,Consulted,Informed,Contact of Source System,Location ,Date produced,Deployed in Prod,Tags,Parent/Related Story,Note,SQL,Table Used
+1,Adhoc NPS:  Washington Region X1 Customer rNPS Trend,"Purpose of this story is to determine the rNPS score for X1 customers and legacy customers by tenure. Source of X1 Customer is Rosetta data. Reason to not choose Netezza for Customer Data - ""Rosetta (NDW) has 4% more records indicating X1 Customer","Overall X1 rNPS is much higher than legacy customers.
+First 90 days tenure is showing volatile score between X1 and non-X1 customer
+
+",NPS,rNPS,NPS,Bryan Kelly for Lucien Calvert ,Bryan Kelly,Mike D,Bryan Kelly,Bryan Kelly,CXA,Gabriela Corchado with West Region,https://comcast.box.com/s/2ys7060op7c4fbsmjcv7suf3rqwc5slw,2014-12-21 to 2016-12-22,NO,"rNPS, Tenure, X1 , Washington , Seattle",None,Analysis is only for Seattle region,"SELECT 
+sum(S.WEIGHTED_SCORE)as weighted_score,
+sum(S.weight) as weigh,
+substring(D.FY_MONTH_END_DT,1,10) as month_end_dt, 
+substring(D.FY_MONTH_END_DT,1,4)||'~'||substring(D.FY_MONTH_END_DT,6,2) as Fmonth_end_dt, 
+case R.X1_PLATFORM when 1 then 'X1'
+else 'Non X1' end as X1,
+count(distinct datalink_id) as survey_count
+,case when s.TENURE <3 then 'Days 0 to 90'
+  when s.TENURE between 3 and 6 then 'Days 91 to 180'
+  when s.TENURE between 6.0000000000001 and 12 then 'Days 181 to 365'
+  when s.TENURE between 12.000000000001and 24 then 'Years 1 to 2'
+  when s.TENURE between 24.000000000001 and 36 then 'Years 2 to 3'
+  when s.TENURE  > 36 then 'Years 3 +'
+  else 'Other' end as Tenure, s.TENURE as mTenure
+ FROM CXA_REPORTING.NZUSER.V_RNPS_LOYALTY_SURVEY S
+ --left outer join CXA_REPORTING.NZUSER.V_CUSTOMER_DIM C
+ --on c.ACCOUNT_NUMBER=S.ACCOUNT_NUMBER
+ left outer join CXA_REPORTING.NZUSER.V_DATE_DIM D
+   --on D.CAL_DATE=S.SURVEY_DATE
+    on S.SURVEY_DATE between D.CAL_DATE - interval '3 months'   
+    and D.CAL_DATE- interval '1 days'
+ left outer join sandbox..ADHOC_SEATTLE_X1_ACCOUNTS2014 R
+  on R.ACCOUNT_NUMBER=S.ACCOUNT_NUMBER
+where S.REGION='Seattle' 
+and D.FY_MONTH_END_DT>'2014-12-21'
+and D.FY_MONTH_END_DT<'2016-12-22'
+and S.promoter_detractor between -1 and 1 
+and s.account_number is not null
+and D.cal_day_diff between -736 and 0
+group by 3,4,5,7,8","V_RNPS_LOYALTY_SURVEY , V_DATE_DIM,ADHOC_SEATTLE_X1_ACCOUNTS2014"
+2,Alerts & Non Alerts in Medallia,Purpose of this story is to understand the Alerts and Non Alerts from Medallia and also present the inbound feedback form and the different alerts triggered as part ofMEDALLIA NPS EMAIL surveys.,"Alerts : Only surveys with an alert are tracked as closed callbacks in Medallia
+
+Non Alerts: If all alerts for a region have been closed, you can begin to call back Non-alert triggered surveys
+
+Inbound Feedback Form: Customer feedback that is not tied to a survey.
+
+Medallia NPS Email Surveys:
+Onboarding & Upgrades
+Repair & Reliability
+Billing
+Journey Agnostic
+
+",NPS,NPS,NPS,Bryan Kelly,Bryan Kelly,Bryan Lucas,Bryan Kelly,Bryan Kelly,CXA,Medallia Team,https://comcast.app.box.com/files/0/f/15384927368/US881344_Callback_Compliance_,21-09-2016,NO,"NPS, Alerts,Inbound Feedback Form, Email Surveys",None,Needs more inputs to understand the observations made using multiple files and queries available in the zip file mentioned in the location column.,,
+3,"ATTI & ATTR Install -
+Truck Roll Scheduling Experience Survey",Measure Customer Satisfaction for their install and repair trucks and health check on quota structure,"Current Time Frame(at the time of analysis): Install and repairs were frequent on Tuesday, Wednesday and Thursday.
+Customer Preference for Install and Repair times : Monday, Friday and Saturday.
+
+Customers who got the preferred timing had higher tNPS compared to the ones who did not.",TNPS,"ATTI, ATTR",CXA,Bryan Kelly,Bryan Kelly,"Hannibal Hesson
+Skylar English",Bryan Kelly,Bryan Kelly,Bryan Kelly,Data: Source from Inmoment survey for install and repair times; survey was sent 2 days post the truck was sent.N6,https://comcast.app.box.com/files/0/f/11525903921/ATTR_-_ATTI,04-10-2016,NA,"tNPS,ATTI,ATTR,install,Repair, Truck Roll,Scheduling,Inmoment,Health Check, Quota",-,-,Input is excel file,NA
+4,Product Usage Survey - Verbatim Analysis,Understand pain points of Customer for video and internet products using verbatims.,"Video verbatims had easily identifiable features that were subsets of pain points like recordings end before the program ends,wrong programs records, Limited Space quality while recording, Latency using DVR, Bad Remote experience and others.
+
+Internet verbatims had themes that provided insight to why customers were promoters/detractors.",Product Usage,"Video,tNPS",CXA,Bryan Kelly,Bryan Kelly,Taylor Lee,Bryan Kelly,Bryan Kelly,Bryan Kelly,Video and Internet related Verabatims.,https://comcast.app.box.com/files/0/f/9034391582/Verbatim_Analysis,25-07-2016,NA,"X1,VOD,DVR,Verbatim,Video,tNPS,Product Usage,Video,pain points,recordings,wrong programs,Limited Space, quality, Latency,DVR, Bad Remote,Internet promoters,detractors.",,,Input is excel file,NA
+5,Product Usage Survey - Customer reported pain points vs Network Data,Identify Network data that may be linked to customer reported pain points for both HSD and Video,"Even though this analysis did not yield any conclusive results, it provided a better understanding of network data and the effort required to find insights about the Reliability Journey. 
+",Product Usage,HSD and Video,CXA,Bryan Kelly,Bryan Kelly,Rui Wen,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/7046167017/Correlation_Analysis,01-07-2016,,"HSD, VIDEO,pain point, network data",,Data are pulled with query and analysis was doen in R,Tables created for analysis on Sandbox database are not available.,NA
+6,NPS Onboarding CIR,NED sent out mover email for a small amount of time on two days. We need to pull the CIR for those days and contrast them with transfers for the period just before and after the emails went out as a way of showing that letting the onboarding team roll out the mover emails is a good idea,CIR was 0 or 1 for the dates 2/4/2016 and 5/19/2016,NPS,EMS,CXA,Bryan Kelly,Bryan Kelly,Bryan Lucas,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/8975337442/US738832_NPS_Onboarding_CIR,15-08-2016,,"EMS, MOVER, NED,CIR emails, onboarding team",US738832,,,
+7,NPS Analysis:P90 rNPS Tenure Trend Tool,"Build an automated rNPS for 0-90 days, 90-365 days and above 1 year tenures",rNPS improved from -18.3 in March 2015 to -10.8 in July 2016,NPS,rNPS,CXA,Bryan Kelly,Bryan Kelly,Hannibal Hesson,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/10993060428/P-90,23-08-2016,,"rNPS, Tenure",US757071,,"select dd.fy_month_end_dt
+, case when nps.tenure between 0 and 2.9 then '0-90'
+WHEN nps.tenure between 3 and 12.0 then '90-1yr'
+WHEN nps.tenure > 12.0 then '1yr+' end as tenure1
+,MIN((dd.CAL_DATE - interval '3 months'))
+,MAX((dd.CAL_DATE - interval '3 months'))
+, (sum(nps.WEIGHTED_SCORE)/sum(nps.weight) *100)::DECIMAL(8,1) as weighted_rNPS_3_month_rolling
+,SUM(nps.WEIGHTED_SCORE) as Weight_Score
+, sum(nps.weight) as Weight
+, count(1), count(distinct datalink_id) as Acct_Count
+--, COUNT(distinct (CASE WHEN PROMOTER_DETRACTOR = 1 THEN account_number ELSE NULL END)) as Promoters
+--, SUM(CASE WHEN PROMOTER_DETRACTOR = 1 THEN WEIGHTED_SCORE ELSE NULL END) as Promoter_Weighted
+--, COUNT(distinct (CASE WHEN PROMOTER_DETRACTOR = 0 THEN account_number ELSE NULL END)) as Passives
+--, SUM(CASE WHEN PROMOTER_DETRACTOR = 0 THEN WEIGHTED_SCORE ELSE NULL END) as Passive_Weighted
+--, COUNT(distinct (CASE WHEN PROMOTER_DETRACTOR = -1 THEN account_number ELSE NULL END)) as Detractors
+--, SUM(CASE WHEN PROMOTER_DETRACTOR = -1 THEN WEIGHTED_SCORE ELSE NULL END) as Detractor_Weighted
+from DW_PRES..DATE_DIM DD
+INNER join SANDBOX..V_RNPS_LOYALTY_SURVEY2 nps on nps.SURVEY_DATE between dd.fy_month_end_dt - interval '3 months'   and dd.fy_month_end_dt- interval '1 days'
+WHERE nps.SURVEY_DATE between '2014-12-22' and '2016-07-21'
+and 
+NVL(LIKELIHOOD_TO_RECOMMEND, -997) not in (-997, -998)
+group by 1,2
+order by 1, 2
+;",V_RNPS_LOYALTY_SURVEY2
+8,Creation of a report for Xfinity moves assistant ,Creation of Xfinity Moves Assistant report  to show 30 day and 7 day CIRs on a regular basis so that we don't have to pull this repeatedly every week.,-,Product Usage,CIR,CXA,Bryan Kelly,Bryan Kelly,Hannibal Hesson,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/9437507601/US736842-_Xfinity_Moves_Assistant,22-08-2016,,"CIR, MOVES ASSISTANT,Xfinity",US736842,,,
+9,CXA Reporting:Customer Equipment DIMUpgrade,"NDW Data Consistency Issues:
+
+Not consistent with Einstein: 30% error rate at the account level
+
+Appears to retain equipment that has been swapped-out or upgraded
+
+NDW needs to review their processing related to equipment / devices
+","Discussed this with Jack Beitler, Product Owner of Einstein 360
+
+There is a SOAP-based API being used to report customer equipment and devices
+
+Pentaho Data Integration has a SOAP adapter and XML parser
+
+New jobs and transforms need to be developed using SOAP and XML
+
+Jobs can be run daily or weekly
+
+Our equipment dimension will then be consistent with what is being reported out of Einstein 360.
+",Einstein,Video,CXA,Bryan Kelly,Bryan Kelly,MarkSimms,Bryan Kelly,John Beitler,Bryan Kelly,John Beiter,https://comcast.app.box.com/files/0/f/16291509806/US894123-Infrastructure%3A_ETL_-_SPIKE_Find_potential_sources_for_Customer_Dim_and_Customer_Equipment_Dim_in_NDW,24-01-2017,,"Customer Equipment ,SOAP-based API,Einstein 360",US894123,,"SELECT A.ACCOUNT_NUMBER 2         , E.EQUIPMENT_SERIAL_NUMBER 3         , E.RECORD_START_TS 4         , B.EQUIPMENT_BOX_TYPE_NAME 5         , E2.MANUFACTURER_NAME 6         , E2.MODEL_DESC 7         , E2.CUSTOMER_OWNED_IND 8         , E.RECORD_END_TS 9 FROM NDW_REPORT_VIEWS.ACCOUNT_EQUIPMENT_V AS E10 INNER JOIN NDW_REPORT_VIEWS.ACCOUNT_DIM AS A ON A.CUSTOMER_ACCOUNT_ID = E.ACCOUNT_KEY11 LEFT JOIN NDW_REPORT_VIEWS.ACCOUNT_EQUIPMENT_BOX_TYPE AS B ON E.EQUIPMENT_SERIAL_NUMBER = B.EQUIPMENT_SERIAL_NUMBER12                         AND E.ACCOUNT_KEY = B.CUSTOMER_ACCOUNT_ID13 LEFT JOIN14 (SELECT DISTINCT EQUIPMENT_SERIAL_NUMBER,15                 MANUFACTURER_NAME, MODEL_DESC, CUSTOMER_OWNED_IND16 FROM NDW_REPORT_VIEWS.EQUIPMENT_DIM17 WHERE TRUNC(RECORD_END_TS)='9999-12-31'18 ) AS E2 ON E2. EQUIPMENT_SERIAL_NUMBER = E.EQUIPMENT_SERIAL_NUMBER1920 WHERE A.ACCOUNT_NUMBER =  '0110510000002'21 AND TRUNC(E.RECORD_END_TS)='9999-12-31'",
+10,Product Survey Dashboard,"Bring continuous customer feedback about our products to the right people faster through rNPS scores and verbatim responses
+
+Provide actionable insights about the impact of reliability on a customer’s likelihood to recommend through pain point identification
+
+Celebrate the features that customers love and find opportunities to promote targeted awareness
+
+","1.Provide quick overview of rNPS by Product and context for NPS score, including pain points and feature awareness.          2.Showed positive trends quarter over quarter, validating prioritization of H1 2016 initiatives                      3.Uncovered top issues from the customer perspective, with fixes already created or initiatives developed to
+fix some pain points",NPS,"TV,HSD",CXA,Bryan Kelly,Bryan Kelly,Taylor Lee,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/14367261271/Dashboard,01-12-2016,,"NPS Product Dashboard,Trend and NPS Impact View , Pain Point Explorer ,Feature Explorer",NA,,,
+11,Analysis Deep Dive: rNPSvs Operational Metrics,Understand the impact ofoperational metrics on rNPS andat what time lag,"ATTR and Billing FCR, on average, have a significant and positive impact on rNPS score
+• The signs of the two significant coefficients make logical/business sense
+• R^2 is low but reasonable, which indicates that ATTR and Billing FCR explain about 33 percent of the variability in rNPS",rNPS,rNPS,CXA,Bryan Kelly,Bryan Kelly,Sam Hopkins,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/7687921549/Shared_Analyses,17-06-2016,,"rNPS,Operational Metrics,time lag,R^2",NA,,,
+12,2017 CX Dashboard Metrics:First Time Right using Perfect 90,The objective of a First Time Right (FTR) metric is to determine if we are onboarding our newcustomers successfully.," The 2016 Order to Activate (FTR) metric only looks at ordersplaced via the web for CDV, HSD and X1. The Perfect 90 attainment score provides a morecomplete picture of a person’sonboarding experience. Every Comcast customer is scored dailyon 4 metrics that drive customer perceptions of their experience over the preceding 90 days",Customer,Onboarding,CXA,Bryan Kelly,Bryan Kelly,Sam Hopkins,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/14583784277/1/f_112632493924,,,"First Time Right (FTR) metric, Viewpoint Score,@tenure 90",NA,,,
+13,2017 CX Dashboard Metrics:Average Customer Effort Score,The objective is to measure the overall effort score for customers for each fiscal month.,"A customer with no or minimal interactions (e.g., calls, chats, truck rolls, tickets) is experiencing a lower effort level than a customer with multiple interactions. A lower effort level is beneficial from  Comcast perspective (e.g., lower costs) and from a customer perspective (e.g., satisfied).",Customer,Customer Service,CXA,Bryan Kelly,Bryan Kelly,Sam Hopkins,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/14583784277/1/f_112632493924,,,"Customer, Effort Score, Truck Rolls, Calls,Chats,Tickets",,,,
+14,2017 CX Dashboard MetricsCustomer Reliability View,The objective is to measure overall Reliability from the customer’s point of view using the various componentsof technical service and repair interactions. ,"It’s best to have no reliability issues or repair interactions, however they can be turned into an opportunity to showcase our best product, Customer Service. Keeping that in mind a contact is not a negative, but getting it right the 1st time is a must, demonstrating how much we value the customertime.        1.Repair ITGs, Repair Calls, Outages and Repair Trucks: The customer had to take time out of their day to interact with Comcast.                                           2.Device Restarts, Speed Tests, Self-Service Repair: A customer is interacting with Comcast, but does not definitively have an issue or need an agent’s assistance.                        3.Outages (no call from customer), Node health and Errors: A customer doesn’t notice all errors or outages that impact service",Customer,Customer Service,CXA,Bryan Kelly,Bryan Kelly,Sam Hopkins,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/14583784277/1/f_112632493924,,,"Repair ITG's, Repair Calls,Outages, Repair Trucks, Device Restarts, Speed Tests, Self Service Repair,Customer Reliability.",,,,
+15,2017 CX Dashboard Metrics:Customer Truck View,The objective is to measure the overall truck experience from the customer point of view usingthe various components of a truck interaction. ,"Its better to have no trucks at all, however when a truck is needed it can be an opportunity to showcase good service. A well executed truckmight actually increase rNPS.",Customer,Customer Service,CXA,Bryan Kelly,Bryan Kelly,Sam Hopkins,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/14583784277/1/f_112632493924,,,"Customer, Truck, ATTR, ATTI,Calls, Fix Code,rNPS",,,,
+16,NPS System Effectiveness: Analysis 2nd and 3rd  Callback attempts is optimal.,The Objective is to know how many Callback attempts is optimal.,"Success Rate by attempt – 1st – 44%, 2nd – 27%, 3rd – 17% (Overall 53%)                       Limiting 2nd and 3rd calls while increasing 1st calls has the potential to improve the efficiency of the callback program",NPS,Callback,CXA,Bryan Kelly,Bryan Lucas,Bryan Kelly,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/16076335445/1/f_124230106409,,,"Repeated Callback Attempts, NPS, NPS Effectiveness 2nd Callback, 3rd Callback, Callback Efficiency",US922229,,,
+17,NPS Deployment Dashboard Non-Deployed Count, The Objective is to see how many agents deployed or left to be deployed at a location in the utilization dashboard.,A  query to find out the non deployed agents count across locations.                               Refined problems with inaccurate mapping data,NPS,eNPS,CXA,Bryan Lucas,Bryan Lucas,Akash Allumuneni,Akash Allumuneni,Bryan Lucas,Bryan Lucas,,https://comcast.app.box.com/files/0/f/15384918944/1/f_116470201532,28-12-2016,,"Deployed, Non Deployed Count of Agents, Utilization, NPS, NPS Deployment",US789657,,"WITH deployed AS ( SELECT i.date_key ,l.division ,l.region ,h.w ork_location ,i.k_comcast_global_channel_name AS channel ,COUNT(*) AS cnt FROM dw _audit..medallia_enps_invites AS i LEFT JOIN cxa_reporting.nzuser.v_national_hierarchy AS h
+ON i.a_unit_identifier = h.nt_login LEFT JOIN  dw _etl..nps_deployment_location AS l ON h.w ork_location = l.w ork_location_code AND h.sap_division = l.division WHERE i.date_key = (select max(date_key )from dw _audit..medallia_enps_invites ) GROUP BY i.date_key ,l.division ,l.region ,h.w ork_location ,i.k_comcast_global_channel_name )
+,all_emp AS ( SELECT l.division ,l.region ,h.w ork_location ,j.channel ,COUNT(*) AS cnt FROM cxa_reporting.nzuser.v_national_hierarchyAS h LEFT JOIN  dw _etl..nps_deployment_location AS l ON h.w ork_location = l.w ork_location_code AND h.sap_division = l.division LEFT JOIN dw _etl..enps_job_family_mapping AS j ON LOWER(h.job_family) = j.job_family WHERE EMPL_STATUS_DESC = 'Active'
+GROUP BY l.division ,l.region ,h.w ork_location ,j.channel )
+SELECT d.date_key ,a.division ,a.region ,a.w ork_location ,a.channel ,case w hen NVL(a.cnt, 0) - NVL(d.cnt, 0) < 0 THEN 0 else   NVL(a.cnt, 0) - NVL(d.cnt, 0) end  AS non_deployed_cnt FROM all_emp AS a LEFT JOIN deployed AS d ON a.division = d.division AND a.region = d.region AND a.w ork_location = d.w ork_location AND a.channel = d.channel WHERE a.w ork_location IS NOT NULL
+
+6 / 6
+
+
+
+
+",NPS_Dash_Fact table
+18,DVR Equipment and Provisioning-Analysis of NPS, The Objective is to understand the Product NPS by device types for X1 customers to take decisions and eliminate specific device types.,1.DVR models are likely to produce significantly lower NPS scores relative to othermodels                2.X1 users with a DVR are much more likely to show a better NPS than non-DVR X1 customers.                 3.No significant difference in NPS between X1 customers who are DVR Provisioned vs. those who are not provisioned.     4.DVR owners are almost 3 times as satisfied with their Comcast service as compared to those who do not have the service or the equipment,NPS,DVR,CXA,Taylor Lee,Mark Simms,Mark Simms,Mark Simms,Mark Simms,Taylor Lee,,https://comcast.app.box.com/files/0/f/13433525282/1/f_107323968663,08-12-2016,,"DVR Equipment, Provisioning, NPS,X1 Cusomters,DVR Provisioning,NPS by device, Device Types, X1, DVR",US822894,,,
+19,Product Survey: Analysis - NPS of customers who run a self-service ITG vs. NPS of customers who don't in June, The Objective is to understand the NPS of HSD customers who ran a self-service ITG vs. those who didn't to know the potentail improvement of NPS if customers run a self-service ITG,"Customers who used the self-serviceITGs had a 5 point decrease in NPS.                      2.Two self-service ITGs -ITG 544 – CX Facing WiFi SSID and PW , ITG 536 – CF_HSD_ResetInternetDevice  were used by customers to troubleshoot HSD issues shows a  very substantial increase in NPS for those customers that used ITG 544.",NPS,ITG,CXA,Taylor Lee,Dean Bixler,Dean Bixler,Dean Bixler,Taylor Lee,Taylor Lee,,https://comcast.app.box.com/files/0/f/12021017256/US835363_-_NPS_of_customers_who_run_a_self-service_ITG_vs._NPS_of_customers_who_don't_in_June,09-11-2016,,"Self Service ITG,ITG 544,ITG 536, NPS, HSD, CX Facing Wifi SSID, PW,CF_HSD_Reset, LOB, rNPS",US835363,,,
+20,NPS: Analysis- Speed Test rNPS Interactions,The Objective is to Investigate and identify the relationships between a customer’s speed test results and their rNPS scores.,"1.Customers achieving higher speed test results are generally more likely to be promoters.        2.A higher volume of surveys may improve the rNPS score
+3.There is a strong concentration of speed test results in the lower speed groupings, but the highest single group was 120%",rNPS,Speed test,CXA,Bryan Kelly,Bryan Lucas,Bryan Kelly,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/7157664341/US662685_NPS_Analysis_Speedtest_rNPS_interactions,18-05-2016,,"Speed test, rNPS, rNPS by speed test, LOB, type of NPS, mbps",US662685,,,
+21,CX Dashboard Analysis: Research Pros/Cons of Proposed Callback Metrics,The objective is to check the callback success rate,"Metrics-1.How many customers did we successfully call back (i.e., speak with) over All Attempts?                                        2.How many customers did we successfully call back (i.e., spoke with) over All Alerts1",Call back Metrics,"Alert Level, Attemp Level",CXA,Sam Hopkins,Sam Hopkins,Hanibal Hesson ,Sam Hopkins,Sam Hopkins,Sam Hopkins,,https://comcast.app.box.com/files/0/f/11757071614/US813194_Callback_Metrics_for_CX_Dashboard_Research,19-10-2016,,"Alert Level, Attemp Level, Call back Metrics, Callback Success Rate, Customer,",US813194,Needs more inputs to understand the observations,,
+22,NPS Customer Perception Dashboard: Add four additional components,"The objective is to  add 4 payment journey metrics to the report. 
+",1.Decrease in the Customers who had issue in understanding the bill2. Overall Journey with ,NPS,Payment Journey Metrics,CXA,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,,https://comcast.app.box.com/files/0/f/11385716072/1/f_95466055306,20-09-2016,,"Billing Journey tNPS,% Trouble Understanding Bill, Trouble Paying Your Bill",US776013,,,
+23,NPS Repair: Analysis - SPIKE - Understand% of Time a Customer's Issue Goes fromRepair to Billing as part of their OverallInteraction with Comcast, The objective to understand how an often an issue reported by a customer transitions from Repair to Billing to understand potential loss in methodology currently being developed for the KPI,"Using Raw Utterance (Smart Connect)-Smart Connect shows only 10.91% of the incidents that begin with a Service call type have a follow-up call. Of those, only 3.82% are for a Billing issue.   2.with the IVR data, more than 62% of the follow-up calls are Billing.",NPS,Billing,CXA,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,,https://comcast.app.box.com/files/0/f/5975098261/1/f_48568251285,04-01-2016,,"IVR,Raw Utterance,Follow up Call,Repair, Billing, Smart Connect, Raw Utterance, Service Call",US591753,,,
+24,NPS: Repair Analysis Billing ITG andRepair Fees Credits Analysis, The objective is to understand what agents are logging into Einstein to see if we can Clean information and to see if we can find a subset of accounts that can feed into Nexidia for a more pointed future analysis in the calls.,The Problem / Solution code analysis suggests Bill Education is the main solution to Billing Inquiries.,NPS,Repair,CXA,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,,https://comcast.app.box.com/files/0/f/5913141993/1/f_48028581149,28-12-2015,,"EMS, MOVER, NED,CIR emails, onboarding team, Einstein, Nexidia, Problem Solution Code, Billing Inquiries, NPS,",US606342,Needs more inputs to understand the observations,,
+25,Business Review (Chronic),"The objective is to analyse the impact of Chronic call reduction on NPS and Cost savings by comparing the trends
+","1.Annual Chronics are steadily declining since Nov’15, with 31% fewer Chronics in Oct’16                2.Chronic reductions saved an average of $8.5 M per month ($94 M October YTD)                               3.Chronic accounts impacted rNPS by 0.37 points (comparing All Customer rNPS to Non-Chronic rNPS) on average, Nov ‘15 through Sep ’16.",Chronic,IVR Agent Calls,CXA,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,,https://comcast.app.box.com/files/0/f/14367494928/1/f_111611806858,14-12-2016,,"Delinquent, Non Deliquent, Chronic Customers, YoY Chronic Comparison,Chronic Reduction Impact,Chronic Calls,Calls by Queue,Cost Savings,Chronic accounts negatively impact,Enterprise Chronic Trend: Daily, Monthly and Annuall,
+YoY Chronic Comparison by Division,
+YoY Chronic Distribution by # of Calls Mad,
+Chronic Calls and % of All Calls by Queue,
+Cost Savings by reducing Chronic Call,
+Chronic Reduction Impact on rNPs,
+YoY Chronic Comparison by Tenure and Non-Pay Status",,,,
+26, Analyze impact of special delinquent routing in Central,The objective is  to understand the Why for the recent volatility in the CX Dashboard Chronic trend,"The prevailing theory is that it's due to the impact of Central routing the delinquent callers to a specialized group ofagents. The belief is that this group of agents will all give a consistent answer; thereby, eliminating the ""agentshopping"" behavior of some delinquent callers. However, since the program was implemented, Chronics spiked up.This is counter-intuitive",Chronic,IVR Agent Calls,CXA,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,,https://comcast.app.box.com/files/0/f/7913839925/1/f_65283441297,18-04-2016,,"Analyze impact of special delinquent routing in Central,agent shopping, IVR Switch data to find ANS Logons,
+The belief is that this group of agents will all give a consistent answer; thereby, eliminating the ""agent shopping"" behavior of some delinquent caller",US677859 ,,"select isc.region  5         , dd.cal_week_end_dt  6         , dd.week_num  7         , case when isc.non_pay_flag is null then 'N' else 'Y' end Delinq_Flg  8         , count(distinct case when isc.region = 'Heartland' and dd.cal_date between '2016-03-26' and '2016-04-13' t hen isc.das_session  9                         when isc.region = 'Florida' and dd.cal_date >= '2016-03-05' then isc.das_session 10                         when isc.region = 'Big South' and dd.cal_date >= '2016-01-01' then isc.das_session end) Dur ing_Routing_Chg 11         , count(distinct case when isc.region = 'Heartland' and dd.cal_date < '2016-03-26' then isc.das_session 12                         when isc.region = 'Florida' and dd.cal_date < '2016-03-05' then isc.das_session 13                         when isc.region = 'Big South' and dd.cal_date < '2016-01-01' then isc.das_session end) Befo re_Routing_Chg 14         , count(distinct case when isc.region = 'Heartland' and dd.cal_date >= '2016-04-14' then isc.das_session en d) After_Routing_Chg 15         , count(distinct isc.das_session) Total_Calls 16 from DW_AUDIT.NZUSER.IVR_SWITCH_COMBINE isc 17         inner join dw_audit..einstein_account_loads eal 18                 on isc.account_number = eal.account_number 19         inner join dw_pres..date_dim dd 20                 on isc.date_key = dd.date_key 21 Where isc.Division = 'Central' 22                 and substr(eal.user_id,1,3) not like 'BP-%' 23                 and isc.queue = 'Billing' --SJH: No pattern noticed on overall items 24                 and dd.cal_date between '2015-12-01' and current_date 25 --              and isc.region = 'Florida' 26 group by 1, 2, 3, 4",
+27,Analysis focused on  chronic volume,"Analysis focused on 9 days of chronic volume, comparing chronics using IVR data and chronics using switch data
+•For Chronic Call Buckets 7 – 15 there is much more volatility between count buckets with IVR chronics than switch chronics
+•For Chronic Call Buckets 17 – 25 the percent difference between buckets almost mirror each other for IVR and switch chronics.
+•West Division consistently has a higher switch count than IVR count",Overall chronics among the divisions is fairly flat using IVR data while switch data shows a sudden decrease.,Chronic,IVR Agent Calls,CXA,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,,https://comcast.app.box.com/files/0/f/5068964170/Chronic_Switch_IVR_Deep_Dive,12-05-2016,,"comparing chronics using IVR data and chronics using switch data,Chronic Call Buckets 7 – 15,Chronic Call Buckets 17 – 25,
+Analysis focused on 9 days of chronic volume, comparing chronics using IVR data and chronics using switch data,West Division consistently has a higher switch count than IVR count which is the opposite of the other two divisions.",US674442,,"SELECT 2                 ACCOUNT_NUMBER 3 --              ,ACCT_NONPAY_STATUS 4 --              ,BILLING 5 --              ,CUSTOMER_TENURE_DAYS 6 --              ,CUSTOMER_TIMELINE_LINK 7                 ,DATE_KEY 8 --              ,DIVISION 9 --              ,EINSTEIN_ACCT_LOADS10 --              ,ER_TICKET_COUNT11 --              ,FIRST_CUSTOMER_CALL_DATE12 --              ,ITG_COUNT13 --              ,IVR_AGENT_TRANSFER_CALLS14 --              ,IVR_SERVICE_CALL_TOTAL15 --              ,LAST_CUSTOMER_CALL_DATE16 --              ,LAST_ER_TICKET_NUMBER17 --              ,LAST_INSTALL_TRUCK_ROLL_COMPLETED_DATE18 --              ,LAST_SRO_TRUCK_ROLL_COMPLETED_DATE19 --              ,LAST_TRUCK_ROLL_COMPLETED20 --              ,LAST_UPDATE_DATE21 --              ,NUMBER_OF_CANCELLED_INSTALL_TRUCK_ROLLS22 --              ,NUMBER_OF_CANCELLED_SRO_TRUCK_ROLLS23 --              ,NUMBER_OF_CANCELLED_TRUCK_ROLLS24 --              ,NUMBER_OF_COMPLETED_INSTALL_TRUCK_ROLLS25 --              ,NUMBER_OF_COMPLETED_SRO_TRUCK_ROLLS26 --              ,NUMBER_OF_COMPLETED_TRUCK_ROLLS27 --              ,OTHER28 --              ,QUERYTYPE29 --              ,REGION30 --              ,RETENTION31 --              ,SALES32 --              ,SERVICE_CDV33 --              ,SERVICE_HSI34 --              ,SERVICE_VIDEO35 --              ,TOTAL_NUMBER_OF_INSTALL_TRUCK_ROLLS36 --              ,TOTAL_NUMBER_OF_SRO_TRUCK_ROLLS37 --              ,TOTAL_NUMBER_OF_TRUCK_ROLLS38                 ,CR_TICKET_PROBLEM_CATEGORY39                 ,CUSTOMER_TYPE40                 ,EFFORTGRADE41                 ,EFFORTSCORE42                 --,EQUIPMENT_LAST_END_DATE43                 ,EQUIPMENT_LAST_START_DATE44                 ,LAST_TTS_TICKET_NUMBER45                 ,MDU_FLAG46                 ,NINE_BOX_SEGMENT47                 ,SCOREDATE48                 ,STATUS49         FROM50                 DW_PRES.NZUSER.CHRONIC_CUSTOMER_NEW51         WHERE52                 date_key = 2015101253                 AND querytype = '7 DAY'54         ORDER BY55                 date_key56                 ,querytype",
+28,Analyze Impact of Chronic Call Distribution due to Call Routing Stoppage,"Following the call routing stoppage on Nov 14th, the number of 6+ chronic call events decreased. This story is to see if there was a matching increase in 3, 4 and 5 call chronic events","Call volumes are declining for 3, 4 and 5 call chronic events, and the future trend suggests the decline will continue. However, the shortened “post-stoppage” period indicate this analysis should be repeated once 30 days have elapsed from the stoppage point.",Chronic ,Chronic Call,CXA,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,Sam Hopkins,,https://comcast.app.box.com/files/0/f/5609056545/1/f_45512713977,02-12-2016,,"3, 4 and 5 call chronic events,pre-stoppage & Post stoppage,Analyze Impact of Chronic Call Distribution due to Call Routing Stoppage",US599038,,,
+29,Analysis of  CIR reporting for Billing Confirmation Emails,Analysis of the existing ETL job and fined tuned the job which are pretty much clean now,Duplicate Mover Email report for billing emails,NPS,Billing,CXA,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,,https://comcast.app.box.com/files/0/f/8548309085/US719462_NPS_Billing_-_Reporting_-_Create_CIR_reporting_for_billing_confirmation_emails,14-07-2016,,"CIR reporting for Billing Confirmation Emails,Duplicate Mover Email report for billing emails",US719462,,"SELECT  2         *  3 FROM  4         dw_etl..etl_ems_content_ids AS e  5 WHERE  6         LOWER(e.contentguid) IN (  7                 '544b8319-144c-4d22-adf5-8a9991a98470'  8                 ,'19affa81-7750-4ca9-8f68-2c3d41a2dc18'  9                 ,'48721d19-11cf-4331-aa7a-15b96d31ebe7' 10                 ,'a07896cf-c32b-4a81-8dcd-4f901060a28f' 11                 ,'f3711ca7-402b-431c-8847-4887da449292' 12                 ,'8fc968eb-7d68-4fe1-996b-7eee469f68be' 13                 ) 14 ; 15 16 17 SELECT 18         * 19 FROM 20         dw_etl..etl_ems_content_ids_history AS e 21 WHERE 22         LOWER(e.contentguid) IN ( 23                 '544b8319-144c-4d22-adf5-8a9991a98470' 24                 ,'19affa81-7750-4ca9-8f68-2c3d41a2dc18' 25                 ,'48721d19-11cf-4331-aa7a-15b96d31ebe7' 26                 ,'a07896cf-c32b-4a81-8dcd-4f901060a28f' 27                 ,'f3711ca7-402b-431c-8847-4887da449292' 28                 ,'8fc968eb-7d68-4fe1-996b-7eee469f68be' 29                 ) 30 ; 31 32 SELECT 33         * 34 FROM 35         dw_etl..etl_ems_max_ids 36 ; 37 38 SELECT 39         MIN(e.date_key) AS min_date_key 40         ,e.content_id 41 FROM 42         dw_audit..audit_email_details AS e 43 WHERE 44         LOWER(e.content_id) IN ( 45                 '544b8319-144c-4d22-adf5-8a9991a98470' 46                 ,'19affa81-7750-4ca9-8f68-2c3d41a2dc18' 47                 ,'48721d19-11cf-4331-aa7a-15b96d31ebe7' 48                 ,'a07896cf-c32b-4a81-8dcd-4f901060a28f' 49                 ,'f3711ca7-402b-431c-8847-4887da449292' 50                 ,'8fc968eb-7d68-4fe1-996b-7eee469f68be' 51                 ) 52 GROUP BY 53         e.content_id",
+30,NPS_System_Reporting_Region_VP_Operations_NPS_spike-Greater Boston Region Adoption Dashboard,The Objective is to find out                                                                      1.% of site participating in eNPS survey Goal ? 75%                                                                                2.Avg weekly success callbacks per supervisor Goal ? 10  per week                                   3.Avg # days a supervisor is active in Medallia per week Target ? 3 per week,"1.Average = 63%, Ranking excludes sites with <5 employees  2.Average = .5 callbacks                   3.Average = 1.4 days of activity",NPS,eNPS,CXA,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,,https://comcast.app.box.com/files/0/f/17677983761/US922027_NPS_System_Reporting_Region_VP_Operations_NPS_spike,27-01-2017,,"eNPS Participation,Medallia Logins, Callbacks per Supervisor,NPS Work Practice Outliers",US922027,,,
+31,rNPS  Research for Brandon,The objective is to research on rNPS scores Promoters and Detractors  on multiple and minmal transactions,rNPS score as 10:Customer who was given additional promotions  for being a regular user ,rNPS,rNPS,CXA,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,,https://comcast.app.box.com/files/0/f/5814389449/rNPS_Reserch_for_Brandon_20151214?,18-12-2015,,"Promoter, Detractor, multiple transactions,minimal transactions,rNPS Score, Tenure",,,,
+32,NPS Effectiveness Analysis-2nd and 3rd Call back Attempts,The Objective is to find repeat callback effectiveness,"1.Success Rate by attempt – 1st – 44%, 2nd – 27%, 3rd – 17% (Overall 53%)            2.The data suggests that 2nd and 3rd attempts should be limited to high priority alerts or in cases of low survey volume",NPS,Callback,CXA,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,,https://comcast.app.box.com/files/0/f/16076335445/US922229_NPS_System_Effectiveness_Analysis_2nd_and_3rd_callback_attempts,17-01-2017,,"Callback Attempt,Repeat Callback Effectiveness,contact rate ",US922229,,,
+33,Chronic Analysis - Chronic Distribution by Business Partner Vs Employee Agents,"To determine if there are any significant differences in AHT between BP’s and EMP’s. Also, to see if there are any trends in either call volume of AHT for the two groups.","There are very few business partners (BP) in Central and West divisions. This fact significantly skews the Average Handling Times (AHT) of BP’s vs. Employed Agents(EMP) for these divisions.
+• The AHT for all divisions is not a good metric because of the above skew. However, for the Northeast Division where there a many BP’s handling chronic customer calls, the AHT’s are slightly lower than those of the employed agents.
+ • Chronic call volume in the Central division is greater than the combination of the Northeast and West divisions.
+• The trend of AHT for the 3 months of the 4th quarter of 2016 for all divisions shows a decrease in EMP calls. However, for the Northeast Division shows a significant drop from month-to-month especially for Employed agents. AHT for BP’s shows a consistent rise but it looks to be insignificant.
+• Calls from chronic customers for all divisions was decreasing month-over-month in the 4th quarter of 2016 for employed agents, but was flat for BP’s. In the Northeast, the chronic call volume dropped month-over-month for employed agents, but call volume rose from November to December for BP’s. Further investigation of why this occurred may be required.",Chronic,AHT - Average Handling Time,CXA,Mark Simms,Mark Simms,Mark Simms,Mark Simms,Mark Simms,Mark Simms,,https://comcast.app.box.com/files/0/f/20424792658/1/f_142719485293,02-03-2017,,"Chronic, AHT, Business Partner, Employee Agents, Call Volumes, IVR_Switch, Average AHT, Call Volumes by Division,AHT Trend",US919609,,,
+34,Comcast Residential Tech Timing Analysis,Impact of ATTI and ATTR met on tNPS,"Successful visits are critical to maintaining strong tNPS for the Onboarding journey and through the Repair & Reliability journey
+? There is a 75.6 difference in tNPS between successful installs (45.3 tNPS) and unsatisfactory 
+installs (-30.3 tNPS)
+? Successful installs also prevent new customers from immediately requiring a repair visit, for which tNPS is generally lower than installs in total (40.2 install tNPS vs. 36.6 repair tNPS)
+? Successful repairs earn tNPS 74.0 higher than unsuccessful repairs (41.5 successful repair tNPS vs. -32.5 unsuccessful repair tNPS)
+? Arrivals towards the end of the 2-hour appointment window earn lower tNPS
+? Repair length has little effect on tNPS in total, while tNPS is highest for installs between 90 minutes and 3 hours
+? Average Time to Repair (ATTR) is 2.1 days, and tNPS decreases as Time to Repair increases
+? Average Time to Install (ATTI) is 5.2 days, though Time to Install does not significantly impact tNPS in total",TNPS,"ATTI, ATTR",CXA,COVERGYS TEAM,COVERGYS TEAM,COVERGYS TEAM,COVERGYS TEAM,COVERGYS TEAM,COVERGYS TEAM,,https://comcast.app.box.com/files/0/f/11637619965/1/f_97644204955,10-10-2016,,"ATTI, ATTR, TNPS,Install, Repair,Techs are late, Succesful Visits, Ontime Visits, Tech arrival, Late Arrivals, tnps by tech arrival time, repair length impact on tnps, install length impact on tnps, time to repair impact on tnps",,,,
+35,Einstein Analytics,"1. Repair ITGs and % of time Customer contacted a channel within 24 hours.
+2. Repair Solution Codes and % of Time Customer contacted a channel within 24 hours
+3. VOC NPS vs ITGs Run
+4. Billing ITGs and % of Time Customer contacted a channel within 24 hours","1.
+•55% of customers whose agent first ran an X1 RDK Errors ITG called again within 24 hours
+• Service calls where the first ITG run was an activation or RDK Error ITG had the highest likelihood of having another agent interaction within 24 hours
+• The highest three first-run ITGs for customers were Informational Issues and Cannot Surf
+
+2.
+•The solution codes that had the highest likelihood of another call within 24 hours were related to troublecalls 
+• Feature/Bill/Customer Education were three of the highest four solutions for repair calls
+• SIK Change of Service was 3rd highest solution for repair calls and 3rd highest for likeliehood for callbacks
+• Power cycling device had lowest 24 hour contact rate at 35% in this list
+
+3.
+• X1 RDK Errors has the lowest NPS of the top 25 ITGs
+• The average NPS is 18 – Cannot Surf, Informational Issues, Xfinity Internet Activations, TV Activations, and X1 XRE Errors fall below the average NPS line
+
+4. 
+•47% of customers whose agent first ran an X1 Platform Activations ITG called again within 24 hours
+• Billing calls where the first ITG run was an activation had the highest likelihood of having another agent interaction within 24 hours
+• Customers calling into the billing queue mostly had Billing Issues, as evidenced by the count of distinct customers",Einstein,ITG and Solutions,CXA,Taylor Lee,CXA,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,,https://comcast.app.box.com/files/0/f/13405056583/1/f_107137776622,01-12-2016,,"ITG, Repair, Customer Contact less than 24 hours, X1 RDK, Error ITG, Informational Issues, Cannot Surf, Trouble Call, Feature, Bill, Customer Education, SIK change of service, Power Cycling Device, VOC NPS, ITGs Run",,,,
+36,Avoidable Truck Rolls,Understand the prior interactions and what happened during those interactions that led to an avoidable truck," Non-Avoidable trucks typically have a shorter duration of time between a voice interaction 
+and the troublecall 
+
+• Slightly more Care Avoidable troublecall journeys had agent interactions that were Video/X1 
+related 
+
+• Slightly more billing-related agent interactions happened for Care Avoidable troublecall journeys 
+
+• Largest call driver for Non-Avoidable troublecalls: Caller ID Problems (Slide 12) • Largest call driver for Care Avoidable troublecalls: DVR Issues",Customer Service,Truck Rolls,CXA,Taylor Lee,CXA,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,,https://comcast.app.box.com/files/0/f/13405056583/1/f_107137780598,01-12-2016,,"Avoidable Truck Roll, Non Avovidable Truck Roll, TroubleCall, Callbacks less than 48 hours, IVR, Agent, Interactions, dotcom, Care Avoidable, Contact Reasons, Call Drivers",,,,
+37,Chronic Customers - Central Division,Understand lower-level contact reasons for chronic customers in the Central Division,"•Central Division customers have a slightly lower drop-off rate (68.2% vs 70.9%) than Enterprise between the 1st and 2nd agent interactions. Both continue to rise between subsequent interactions
+
+• #1 Journey by volume is 6 agent interactions in a row (192 out of 6,811 journeys) 
+
+• Avg journey duration is 35 hours and 54 minutes for 6 agent interactions in a row 
+
+• 40% of journeys end within 10 interactions of the 6,811 journeys. 80% end within 16 interactions
+
+• Most interactions made by chronic callers were agent interactions.  The second highest was through the IVR
+
+• SIKs were the smallest interaction by volume, but the largest by % of 1st interaction in its channel
+
+• Customers going across channels increases as the sequence in journey increase
+
+• Most of the cross channel sequence in journey increases are as a result of Something to Truckroll and Something to Digital",Chronic ,Contact Reasons,CXA,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,,https://comcast.app.box.com/files/0/f/13405056583/1/f_107137534214,01-12-2016,,"Chronic, Central Division,Customer Journeys, Voice, IVR, Web, Truck Roll, Mobile, Mobile App, SIK, Chronic Journeys, Central Vs Enterprise, Journey Paths, Interactions,  Journeys by Number of Interactions, Interactions by Type, Cross Channel Interactions, ",,,,
+38,Callback Effectiveness Analysis,"Is there a correlation between Callbacks and improvement to customer experience metrics including UCR, ACC, customer effort score, CLV margin and churn
+","Analyzed over 580k alerted surveys from Medallia and VOC for fiscal Jul ‘16 to Dec ‘16
+Callback numbers show more calls being made on lower priority alerts
+The median number of days from final (success or 3 attempts) callback is 4 days
+Successful Callback shows no significant impact on UCR and ACC
+3 months after survey taken:
+insignificant impact on customer effort score and active CLV margin
+Successful Callback group surprisingly +0.8% higher churn than No Callback group
+Issues unresolved, Successful Callback group’s churn 2.6% higher than No Callback group
+
+
+Recommendations:
+Analyze why Callbacks aren’t being made on higher priority alerts with emphasis on customers requesting Callbacks that aren’t called
+",Customer,Callback,CXA,Mike Degrado,Mike Degrado,Mike Degrado,Mike Degrado,Mike Degrado,Mike Degrado,,https://comcast.app.box.com/files/0/f/21101599450/US846214_NPS_System_Callback_Effectiveness%3A_Analysis-_Callback_key_impacts_to_customer_experience,13-03-2017,,"Callback, UCR, ACC,Customer Effort Score, CLV Margin, Succesful Callbacks, high priority alerts, Low Priority Alerts, Failed Callback, Successful Callback, No Callback, Medallia Surveys, VOC, tNPS Trend by Month, Customer First Calls Post Transaction,Average Calls per Customer,",US846214,,,
+39,SWAPS and NPS,To provide a view on the effectiveness of swaps on rNPS and baseline the rNPS delta for customers pre- and post-swap,"•Post-Swap rNPS (-13.9) underperform compared to Post-SIK rNPS (-6.6)
+
+• Device Swaps was a subset of total SIKs sent out in Fiscal Nov and Fiscal Dec • Both Post-SIK and Post-Swap rNPS outperform their “Pre-” counterparts • Post-Swap group has no customers in the 0-90 day range
+
+• All Post-Swap experiences have a lower rNPS score than post SIK experiences
+
+• Central Swaps customers have a worse score post-swap than pre-swap
+
+• NED Swap experience had a +10.7 pre/post delta in rNPS, the highest delta of any division
+
+• Next Steps:
+• Better understand Swaps program for additional context on why SIK outperforms Swaps
+• Profile accounts in each group to see if other underlying components are influencing rNPS (ie. Does SIK population over-index on new customers vs. Swaps population?)",NPS,rNPS,CXA,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,Taylor Lee,,https://comcast.app.box.com/files/0/f/8352086625/1/f_69832057569,13-06-2016,,"Swaps, NPS, Post_swap rNPS, SIK, Central Swa Customers, SIKs Vs Swaps, Device Swaps, Jess Eissinger",,,,
+40,NPS Repair Analysis - Break out tNPS and %s into 30 Minute Windows for Truck Rolls,"Identified all customers surveyed in the three days following their trouble call. 
+• Grouped by how close the tech arrives to the beginning of the scheduled two hour window.
+
+
+o < 30 minutes o 31 to 60 minutes o 61 to 90 minutes o 91 to 120 minutes o > 120 minutes
+
+
+• Calculated tNPS scores of customers in each time frame","• As technician arrival times grow later in the window the number of promoters decreases
+• The rate of neutral customers is nearly constant across all time ranges
+• The tNPS score for these customers decreases by about 1 point for ever 30 minutes later that the tech arrives.
+• Exceeding the two hour window nearly doubles the number of promoters who become dractors",NPS,Repair,CXA,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,,https://comcast.app.box.com/files/0/f/7433138793/1/f_61122331649,13-04-2016,,"NPS, Repair Analysis, tNPS, Truck Rolls, Tech Arrival Times, Trouble Call",US661890,,,
+41,PRP vs BAU Node Analysis for rNPS,"• 1. Find all nodes that are being fixed through PRP vs. BAU 
+• 2. Connect nodes to their customers and see if there are any NPS scores 
+• 3. Determine if there are enough NPS scores in PRP and BAU for statistical significance. 
+• 4. Create the compare and compile info into a summary slid","rNPS spike post repair may be due to down time during node repair and survey coming in closely behind down time
+• Based on Freedoms rNPS compared to NED rNPS, if a program were to affect rNPS it would be visible and improvement should be able to be tracked easily
+• Access to more PRP nodes would increase chance of surveys for PRP type as rNPS surveys are randomly, and can not be sent to just PRP node types
+• National outages may be slightly altering rNPS for timeframe researched",NPS,rNPS,CXA,Hannibal Hesson,Hannibal Hesson,Hannibal Hesson,Hannibal Hesson,Hannibal Hesson,Hannibal Hesson,,https://comcast.app.box.com/files/0/f/6999789057/US654825_PRP_vs_BAU_nodes,06-04-2016,,"PRP, BAU, Node Analysis, rNPS, Fixing Nodes, Proactive Reliability Program, Freedom BAU, Health Worst Nodes, ",US654825,,,
+42,Warm - Cold Transfer Analysis,MEASURE PERCENTAGE OF WARM/COLD/NO TRANSFER CALLS,"6 Month Overview
+Data pulled from Netezza and cross-checked from NCO database (source) all months match expect February which 
+has a 1% variance due to Warm Transfer flag being added to database
+
+NEXT STEPS
+•Divisional and Regional (customer impact), Call Center (Operational Impact) distribution •Break out by queue to determine transfer rates by queue AND tie to tNPS and rNPS. •Determine % of cold transfers where a warm transfer was attempted but not achieved due to SLA/SLs.  If a 
+significant % of the cold transfers had an attempted warm transfer, this would be a good use case to push those customers to virtual hold and improve service levels (assuming cold transfers are part of the service level calculation",Customer Service,Customer Service,CXA,Bryan Kelly,Bryan Kelly,Bryan Kelly,Bryan Kelly,Bryan Kelly,Bryan Kelly,,https://comcast.app.box.com/files/0/f/7000257613/US653371_warm-cold-no_transfer_calls,16-03-2016,,"Warm Transfer, Cold Transfer, Not Transferred,TNPS, rNPS, Percentage of cold transfers, Percentage of warm transfers, SLA's ",US653371,,,
+43,NPS:Reliability Analysis - Customer Pain Points vs. Call In Rates and Truck Roll Rates,"• CIR and TRR vs. the number of pain points recorded (group by No issues, 1, 2, 3, 4, 5+)
+• NPS score vs. number of pain points recorded
+• For customers with lower NPS and no issues, did they have a higher call in rate for billing?","The more pain points customers have, the lower the NPS will be.
+
+Generally speaking, for customers with lower NPS and no issues, they do have a higher call in rate for billing (approximately by 4%). 
+
+For customers with lower NPS(Detractor) and no issues, the Billing Call rate is higher. Billing Call per Account increases when customers have issues regardless of NPS score",NPS,Customer Service,CXA,Mengbing Qian,Mengbing Qian,Mengbing Qian,Mengbing Qian,Mengbing Qian,Mengbing Qian,,https://comcast.app.box.com/files/0/f/5923591765/US610534_NPS_Reliability__Analysis_-_Customer_Pain_Points_vs._Call_In_Rates_and_Truck_Roll_Rates,06-01-2016,,"NPS, Pain Points, Call in Rates, Truck Roll Rates,CIR, TRR,Detractor",US610534,,,
+44,Chronic rNPS P90 and After P90,"1.P90 Chronic & Non-Chronic rNPS
+
+2. Greater than 90 Days Chronic & Non-Chronic rNPS","1.
+• Non-Chronic P90 have outgained Chronic P90 by 1.5%
+• Moreover, Non-Chronic P90 with a recommendation of 10 increased 3% YoY for Q3
+• P90 rNPS Breakout • Chronic Q3-2015 is -16.3 • Chronic Q3-2016 is -10.8 • Non-Chronic Q3-2015 is -9.8 • Non-Chronic Q3-2016 is -1.6
+
+2.
+• Chronic tenure greater than 90 days is outperforming non-chronic in the promoter category
+Chronic customers that are past their P90 experience have improved nearly 6% by migrating out of the detractor category and into a passive or promoter category.
+• Greater than 90 days rNPS Breakout • Chronic Q3-2015 is -20.3 • Chronic Q3-2016 is -11.0 • Non-Chronic Q3-2015 is -12.8 • Non-Chronic Q3-2016 is -6.7",Chronic,rNPS,CXA,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,,https://comcast.app.box.com/files/0/f/12180928456/rNPS_shift_for_Chronics_by_Tenure,15-11-2016,,"rNPS, Chronic,P90,Non-Chronic, Chronic Tenure Greater than 90 days",,,,
+45,Top Issues for P90 Chronic Calls,Identify Top issues for P90 Chronic calls,"•HSD
+–Activation –Modem is offline –Issue with SIK Activation –There’s no connectivity –Modem is online but cannot connect –Slow Connectivity –Customizing Wi-Fi settings
+•Video
+–There's no signal –X1/STB/DTA activation –X1 - Remote Activation –All channels are displaying not authorized –X1 is offline
+•Voice
+–Voice Activation –There’s no dial tone
+•Informational ITGs •Billing ITGs",Chronic Calls,Customer Service,CXA,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,Bryan Lucas,,https://comcast.app.box.com/files/0/f/7488669261/US674410_Chronic_Analysis_-_Identify_Non-Chronic_to_Chronic_shift_using_Verbatims,5/52016,,"P90, Chronic,HSD, Video,Voice, Informational ITGs, Billing ITGs",US674400,,,
+46,Chronic Analysis -Enhancements to P90 Chronics Breakdown by New-Move,"• Normalize P90 Chronics / 100K for new and move customers
+• Breakdown by billing in service call queues
+• Identify top 10 TTS problem codes to understand root cause","Overall Top TTS
+• Day -6 to 0
+    X1 Truck Roll Inquiry
+• Day 1 to 5 
+   Xfinity Internet Activations
+• Day 6 to 8 
+   No Block Sync
+• Day 9 to 14 
+   Bill Inquiry
+
+0-14 Day Top 3 TTS
+•Move
+  No Block Sync 
+  Xfinity Internet Activations  
+  Bill Inquiry
+
+• New
+  Xfinity Internet Activations 
+  No Block Sync  
+  Bill Inquiry
+",Chronic,Customer Service,CXA,"Bryan Lucas
+Sri Bolla","Bryan Lucas
+Sri Bolla","Bryan Lucas
+Sri Bolla","Bryan Lucas
+Sri Bolla","Bryan Lucas
+Sri Bolla","Bryan Lucas
+Sri Bolla",,https://comcast.app.box.com/files/0/f/9046449422/US739102_Chronic_Analysis_-_Enahacements_to_P90_Chronic_Breakdown_by_New-Move,22-08-2016,,"P90, Chronic,New Customers, Move Customers,Service call queues, TTS, X1 Truck Roll Inquiry, Xfinity Internet Activations, No Block Sync, Bill Inquiry",US739102,,,
+47,Chronic Vs Non-Chronic rNPS shift,Identify Chronic Vs Non-Chronic rNPS shift,"Chronics
+• Biggest declines occurred in 0 and 5 each dropping 1.5% • Biggest gain occurred in 8 with an increase of 2.7% • There is a noticeable shift from detractors to passives and promoters with 7,8,9 and 10s increasing a total of 2.9%
+
+Non-Chronics
+• The shift from detractors to passives and promoters is even more apparent with 7,8,9 and 10s with an overall gain of 4.5% 
+• Even more encouraging, is the fact that a score of 10 made up nearly 3% of the aforementioned 4.5%
+",Chronic,rNPS,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,Dean Bixler,,https://comcast.app.box.com/files/0/f/9206519581/US739046%3A_Chronic%3A_Analysis_-_rNPS_shift_for_Chronics,04-08-2016,,"Chronic, Non-Chronic, rNPS,promoters, detractors, passives,Likelihood to recommend",US739046,,,
+48,Preliminary Billing NPS  Analysis,"25 week trend on                                                                             rNPS,tNPS,Billing and Service tNPS,Call Volume,Call Proprtion, Agent tNPS,Agent Volume,Service Level, Onborading","1.The onboarding tNPS is better than overall tNPS                          2.Generally tNPS follows similar pattern of Overall Service Level  3.Lower tNPS when the ratio closer to normal 4.8
+4.tNPS of both BP and Internal agents are improving.                              5.The billing proportion is decreasing while the service call proportion is
+increasing.                                            6. Service call volume is relatively consistent                                            7.Billing tNPS and overall tNPS are tightly correlated                                   8.rNPS and tNPS are trending in the same direction and correlated         9.Overall tNPS was improving through December – Jan. shows slight decline , Trend is consistent across Divisions                 10.Overall rNPS has been steadily improving since September 2015",NPS,NPS,CXA,Qian Mengbing,Qian Mengbing,Qian Mengbing,Qian Mengbing,Qian Mengbing,Qian Mengbing,,https://comcast.app.box.com/files/0/f/6268440157/1/f_50996630637,26-01-2016,,"25 week trend                                                                              rNPS,tNPS,Billing and Service tNPS,Call Volume,Call Proprtion, Agent tNPS,Agent Volume,Service Level, Onborading",US617448,,,
